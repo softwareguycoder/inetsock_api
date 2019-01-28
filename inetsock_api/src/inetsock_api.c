@@ -5,8 +5,11 @@
 
 #include "stdafx.h"
 
-#include "utils.h"
 #include "inetsock_api.h"
+
+#ifndef INVALID_SOCKET_DESCRIPTOR
+#define INVALID_SOCKET_DESCRIPTOR 0
+#endif //INVALID_SOCKET_DESCRIPTOR
 
 ///////////////////////////////////////////////////////////////////////////////
 // SOCKET struct - wraps a socket file descriptor in an opaque type that also
@@ -98,6 +101,51 @@ void RunServer(HSOCKET hSocket, int nPort,
 	LPSOCKET_EVENT_CALLBACK lpfnCommCallback)
 {
 	// TODO: Add implementation code here
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SetSocketState - Sets the state of the specified socket to the specified
+// SOCKET_STATE value.  If the socket handle has an invalid value, this function does
+// nothing.
+
+void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
+{
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return;
+
+	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
+		return;
+
+	if (SOCKET_STATE_ERROR == hSocket->state)
+		return;
+
+	hSocket->state = newState;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SetSocketType - Sets the type of the socket specified by the handle provided
+// to the specified type (one of the SOCKET_TYPE values: CLIENT, DATA, or SERVER).
+// If the socket is in the SOCKET_STATE_ERROR state or if the handle is
+// INVALID_HANDLE_VALUE, this function does nothing.  This function will also
+// only operate if the type has not already been set to something other than
+// SOCKET_TYPE_UNKNOWN, which is the default.  Once the socket's type has been
+// set, it should not be altered in the same program for the same socket.
+
+void SetSocketType(HSOCKET hSocket, SOCKET_TYPE newType)
+{
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return;
+
+	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
+		return;
+
+	if (SOCKET_STATE_ERROR == hSocket->state)
+		return;
+
+	if (SOCKET_TYPE_UNKNOWN != hSocket->type)
+		return;
+
+	hSocket->type = newType;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
