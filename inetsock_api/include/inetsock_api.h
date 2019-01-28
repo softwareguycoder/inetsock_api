@@ -1,4 +1,4 @@
-// SocketApi.h - file that defines prototypes for functions, typedefs, and data structures that
+// inetsock_api.h - file that defines prototypes for functions, typedefs, and data structures that
 // together form an API that abstracts away the details of setting up basic clients and servers
 //
 

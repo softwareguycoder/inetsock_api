@@ -1,4 +1,4 @@
-// SocketApi.c - provides implementations for opaque types, methods, and
+// inetsock_api.c - provides implementations for opaque types, methods, and
 // callbacks which together abstract away the details of calling the,
 // e.g., SocketDemoUtils_* functions
 //
