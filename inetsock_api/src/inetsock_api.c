@@ -16,7 +16,7 @@
 // carries information about the state and type of socket.
 
 struct _tagSOCKET {
-	int				nSocket;		/* Linux file descriptor */
+	int				nSocketDescriptor;		/* Linux file descriptor */
 	long			dwLastError;	/* WSA* error code for the last network error */
 	SOCKET_TYPE 	sockType;		/* What type of socket is this? */
 	SOCKET_STATE 	sockState;		/* What state is this socket in? */
@@ -113,7 +113,7 @@ void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
 	if (INVALID_HANDLE_VALUE == hSocket)
 		return;
 
-	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
+	if (hSocket->nSocketDescriptor <= INVALID_SOCKET_DESCRIPTOR)
 		return;
 
 	if (SOCKET_STATE_ERROR == hSocket->sockState)
@@ -136,7 +136,7 @@ void SetSocketType(HSOCKET hSocket, SOCKET_TYPE newType)
 	if (INVALID_HANDLE_VALUE == hSocket)
 		return;
 
-	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
+	if (hSocket->nSocketDescriptor <= INVALID_SOCKET_DESCRIPTOR)
 		return;
 
 	if (SOCKET_STATE_ERROR == hSocket->sockState)
