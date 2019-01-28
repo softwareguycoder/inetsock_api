@@ -16,10 +16,10 @@
 // carries information about the state and type of socket.
 
 struct _tagSOCKET {
-	int		nSocket;		/* Linux file descriptor */
-	long	dwLastError;	/* WSA* error code for the last network error */
-	SOCKET_TYPE type;		/* What type of socket is this? */
-	SOCKET_STATE state;		/* What state is this socket in? */
+	int				nSocket;		/* Linux file descriptor */
+	long			dwLastError;	/* WSA* error code for the last network error */
+	SOCKET_TYPE 	sockType;		/* What type of socket is this? */
+	SOCKET_STATE 	sockState;		/* What state is this socket in? */
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,10 +116,10 @@ void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
 	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
 		return;
 
-	if (SOCKET_STATE_ERROR == hSocket->state)
+	if (SOCKET_STATE_ERROR == hSocket->sockState)
 		return;
 
-	hSocket->state = newState;
+	hSocket->sockState = newState;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,13 +139,13 @@ void SetSocketType(HSOCKET hSocket, SOCKET_TYPE newType)
 	if (hSocket->nSocket <= INVALID_SOCKET_DESCRIPTOR)
 		return;
 
-	if (SOCKET_STATE_ERROR == hSocket->state)
+	if (SOCKET_STATE_ERROR == hSocket->sockState)
 		return;
 
-	if (SOCKET_TYPE_UNKNOWN != hSocket->type)
+	if (SOCKET_TYPE_UNKNOWN != hSocket->sockType)
 		return;
 
-	hSocket->type = newType;
+	hSocket->sockType = newType;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
