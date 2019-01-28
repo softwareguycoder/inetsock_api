@@ -7,8 +7,14 @@
 
 #include "inetsock_api.h"
 
+/**
+ * @brief Defines the value for an invalid Socket Descriptor. In Linux,
+ * all socket descritors are positive integers greater than 2.  So, 2
+ * (mapped to STDERR) and less represents an invalid descriptor.  Testing
+ * for this is how we know that an error condition exists.
+ */
 #ifndef INVALID_SOCKET_DESCRIPTOR
-#define INVALID_SOCKET_DESCRIPTOR 0
+#define INVALID_SOCKET_DESCRIPTOR 		2
 #endif //INVALID_SOCKET_DESCRIPTOR
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,7 +100,8 @@ HSOCKET OpenSocket(SOCKET_TYPE type)
 // socket for listening for incoming connections.  A callback provided by the
 // caller is called for each change in the server socket's state.  Run the
 // listen/accept/respond loop for a server socket and fires the calllback as
-// needed.
+// needed.  The socket handle passed should already have been opened by a call
+// to OpenSocket.
 
 void RunServer(HSOCKET hSocket, int nPort,
 	LPSOCKET_EVENT_CALLBACK lpfnServerCallback,
