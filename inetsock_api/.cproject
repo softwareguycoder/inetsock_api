@@ -69,6 +69,8 @@
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.1902432178" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/inetsock_core}&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/debug_core}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/conversion_core}&quot;"/>
@@ -97,6 +99,8 @@
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.paths.160689651" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/inetsock_core/Debug}&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/debug_core/Debug}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/conversion_core/Debug}&quot;"/>
@@ -104,6 +108,8 @@
                                 </option>
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.link.option.libs.1524255374" name="Libraries (-l)" superClass="gnu.c.link.option.libs" useByScannerDiscovery="false" valueType="libs">
+                                    									
+                                    <listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="inetsock_core"/>
                                     									
                                     <listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="debug_core"/>
                                     									
@@ -130,6 +136,8 @@
                             <tool id="cdt.managedbuild.tool.gnu.assembler.so.debug.636231770" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.so.debug">
                                 								
                                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.both.asm.option.include.paths.1620338000" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/inetsock_core}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/debug_core}&quot;"/>
                                     									
@@ -174,6 +182,20 @@
                         <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/debug_core/Debug"/>
                         						
                         <entry flags="RESOLVED" kind="libraryFile" name="debug_core" srcPrefixMapping="" srcRootPath=""/>
+                        					
+                    </externalSetting>
+                    				
+                </externalSettings>
+                				
+                <externalSettings containerId="inetsock_core;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+                    					
+                    <externalSetting>
+                        						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/inetsock_core"/>
+                        						
+                        <entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/inetsock_core/Debug"/>
+                        						
+                        <entry flags="RESOLVED" kind="libraryFile" name="inetsock_core" srcPrefixMapping="" srcRootPath=""/>
                         					
                     </externalSetting>
                     				
