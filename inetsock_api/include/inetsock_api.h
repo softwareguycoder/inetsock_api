@@ -52,11 +52,11 @@ typedef struct _tagSOCKET *HSOCKET;
 /**
  * @brief Pointer to a function that will be executed as a callback each time a given socket's
  * state changes.
- * @param hSocekt Handle to the socket that is firing events through this particular callback.
+ * @param hSocket Handle to the socket that is firing events through this particular callback.
  * @param lpUserState Points to additional user state information.  Can be of any type (in
  * principle).
  */
-typedef void (*LPSOCKET_EVENT_CALLBACK)(HSOCKET hSocket, void* lpUserState);
+typedef void (*LPSOCKET_EVENT_ROUTINE)(HSOCKET hSocket, void* lpUserState);
 
 /**
  * @brief Closes all connections on the specified socket and releases its resources back to the
@@ -74,11 +74,8 @@ void CloseSocket(HSOCKET hSocket);
  * @param pszHostAddress Points to a buffer that contains a null terminated string that contains either
  * a valid IPv4 address or DNS-resolvable hostname.
  * @param nPort Integer specifying the port on which the server is listening.
- * @param lpfnClientCallback Pointer to a function having LPSOCKET_EVENT_CALLBACK signature which is called
- * asynchronously when an interesting event happens on the socket.
  */
-void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort,
-		LPSOCKET_EVENT_CALLBACK lpfnClientCallback);
+void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort);
 
 /**
  * @brief Call this function if the state of the specified socket is SOCKET_STATE_ERROR.
@@ -106,7 +103,7 @@ SOCKET_TYPE GetSocketType(HSOCKET hSocket);
  * @brief Opens (creates) a new socket of the specified type.
  * @param type One of the SOCKET_TYPE values.  Specifies which type of socket is to be opened.
  */
-HSOCKET OpenSocket(SOCKET_TYPE type);
+HSOCKET OpenSocket(SOCKET_TYPE type, LPSOCKET_EVENT_ROUTINE lpfnCallback);
 
 /**
  * @brief Runs the listen/accept/connect loop for a server on a specified port number, using the
@@ -114,12 +111,28 @@ HSOCKET OpenSocket(SOCKET_TYPE type);
  * as which the calling program resides.
  * @param hSocket Handle to the server TCP endpoint's socket.
  * @param nPort Port number on which the server is to listen for incoming connections.
- * @param lpfnServerCallback Callback function that is called whenever an event happens on the
- * server's TCP endpoint.
- * @param lpfnCommCallback Callback function that is called whenever an event happens on the
- * server's end of the client TCP endpoint.
  */
-void RunServer(HSOCKET hSocket, int nPort, LPSOCKET_EVENT_CALLBACK lpfnServerCallback,
-		LPSOCKET_EVENT_CALLBACK lpfnCommCallback);
+void RunServer(HSOCKET hSocket, int nPort);
+
+/**
+ * @brief Sets the state of the specified socket to a new value as indicated by the newState
+ * parameter.
+ * @param hSocket Handle to the socket for which the state is to be changed.
+ * @param newState One of the SOCKET_STATE values that defines the new state.
+ * @remarks If this socket has a callback registered, then the callback is called with a
+ * NULL value for the lpUserState parameter.
+ */
+void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState);
+
+/**
+ * @brief Sets the state of the specified socket to a new value as indicated by the newState
+ * parameter.
+ * @param hSocket Handle to the socket for which the state is to be changed.
+ * @param newType One of the SOCKET_TYPE values that defines the new type.
+ * @remarks If this socket has a callback registered, then the callback is called with a
+ * NULL value for the lpUserState parameter.
+ */
+void SetSocketType(HSOCKET hSocket, SOCKET_TYPE newType);
+
 
 #endif /* __INETSOCK_API_H__ */

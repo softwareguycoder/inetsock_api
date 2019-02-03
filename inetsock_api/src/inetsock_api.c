@@ -18,6 +18,20 @@
 #endif //INVALID_SOCKET_DESCRIPTOR
 
 ///////////////////////////////////////////////////////////////////////////////
+// free_buffer - Internal function that is not exposed to users of this library.
+// This function is in charge, simply, of calling free() on a non-NULL void
+// pointer.
+
+void free_buffer(void **ppBuffer)
+{
+    if (ppBuffer == NULL || *ppBuffer == NULL)
+        return;     // Nothing to do since there is no address referenced
+
+    free(*ppBuffer);
+    *ppBuffer = NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // SOCKET struct - wraps a socket file descriptor in an opaque type that also
 // carries information about the state and type of socket.
 
@@ -26,6 +40,7 @@ struct _tagSOCKET {
 	long			dwLastError;	/* WSA* error code for the last network error */
 	SOCKET_TYPE 	sockType;		/* What type of socket is this? */
 	SOCKET_STATE 	sockState;		/* What state is this socket in? */
+	LPSOCKET_EVENT_ROUTINE lpfnCallback;	/* Function that gets called when something happens on this socket */
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,7 +51,20 @@ struct _tagSOCKET {
 
 void CloseSocket(HSOCKET hSocket)
 {
-	// TODO: Add implementation code here
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return;
+
+	SetSocketState(hSocket, SOCKET_STATE_CLOSING);
+
+	// This library sits on top of the inetsock_core library; so, call that library's
+	// SocketDemoUtils_close function to actually do the closing.
+	SocketDemoUtils_close(hSocket->nSocketDescriptor);
+
+	SetSocketState(hSocket, SOCKET_STATE_CLOSED);
+
+	// This library manages calling malloc() and free() on socket handles for
+	// the caller.  Sincer we have closed this socket, time to free it.
+	free_buffer((void**)&hSocket);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -46,8 +74,7 @@ void CloseSocket(HSOCKET hSocket)
 // when the socket's state changes
 //
 
-void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort,
-		LPSOCKET_EVENT_CALLBACK lpfnClientCallback)
+void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort)
 {
 	// TODO: Add implementation code here
 }
@@ -59,8 +86,16 @@ void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort,
 
 long GetLastError(HSOCKET hSocket)
 {
-	// TODO: Add implementation code here
-	return 0L;
+	if (SOCKET_STATE_ERROR != GetSocketState(hSocket))
+		return 0;		/* no error */
+
+	/* return the errno value, since the socket being in an error state
+	 * most likely means that this function is being called from the callback
+	 * the user of this library set up right after the callback was fired
+	 * when a inetsock_core library function failed.
+	 */
+
+	return errno;
 }
 
 
@@ -70,8 +105,15 @@ long GetLastError(HSOCKET hSocket)
 
 SOCKET_STATE GetSocketState(HSOCKET hSocket)
 {
-	// TODO: Add implementation code here
-	return SOCKET_STATE_UNKNOWN;
+	SOCKET_STATE result = SOCKET_STATE_UNKNOWN;	// default return value
+
+	// Obviously, an invalid socket handle does not have a state
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return result;
+
+	result = hSocket->sockState;
+
+	return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,8 +121,14 @@ SOCKET_STATE GetSocketState(HSOCKET hSocket)
 
 SOCKET_TYPE GetSocketType(HSOCKET hSocket)
 {
-	// TODO: Add implementation code here
-	return SOCKET_TYPE_UNKNOWN;
+	SOCKET_TYPE result = SOCKET_TYPE_UNKNOWN;
+
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return result;
+
+	result = hSocket->sockType;
+
+	return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,10 +137,43 @@ SOCKET_TYPE GetSocketType(HSOCKET hSocket)
 // the socket is for a client, data, or server connection.  Returns a handle
 // to the new socket.
 
-HSOCKET OpenSocket(SOCKET_TYPE type)
+HSOCKET OpenSocket(SOCKET_TYPE type, LPSOCKET_EVENT_ROUTINE lpfnCallback)
 {
-	// TODO: Add implementation code here
-	return (HSOCKET)INVALID_HANDLE_VALUE;
+	HSOCKET hSocket = (HSOCKET)INVALID_HANDLE_VALUE;
+
+	if (type == SOCKET_TYPE_UNKNOWN)
+		return hSocket;
+
+	if (lpfnCallback == NULL)
+		return hSocket;
+
+	// Use malloc to dynamically allocate a new HSOCKET (really a new
+	// tagSOCKET structure but HSOCKET is a pointer type).
+	hSocket = (HSOCKET)malloc(sizeof(HSOCKET));
+
+	// Initialize the new socket with a call to SocketDemoUtils_createTcpSocket
+	hSocket->nSocketDescriptor = SocketDemoUtils_createTcpSocket();
+	if (hSocket->nSocketDescriptor <= 0)
+	{
+		// Failed to open new socket.  Call GetLastError to get the errno
+		// and then use strerror to tell the user.
+		SetSocketState(hSocket, SOCKET_STATE_ERROR);
+
+		free_buffer((void**)&hSocket);
+
+		// Call the callback -- this is the only time that we call the callback
+		// prior to it being associated with a socket handle
+		lpfnCallback(INVALID_HANDLE_VALUE, NULL);
+
+		return INVALID_HANDLE_VALUE;
+	}
+
+	// Associate the callback with the new socket
+	hSocket->lpfnCallback = lpfnCallback;
+
+	SetSocketState(hSocket, SOCKET_STATE_OPENED);
+
+	return hSocket;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,17 +184,18 @@ HSOCKET OpenSocket(SOCKET_TYPE type)
 // needed.  The socket handle passed should already have been opened by a call
 // to OpenSocket.
 
-void RunServer(HSOCKET hSocket, int nPort,
-	LPSOCKET_EVENT_CALLBACK lpfnServerCallback,
-	LPSOCKET_EVENT_CALLBACK lpfnCommCallback)
+void RunServer(HSOCKET hSocket, int nPort)
 {
 	// TODO: Add implementation code here
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // SetSocketState - Sets the state of the specified socket to the specified
-// SOCKET_STATE value.  If the socket handle has an invalid value, this function does
-// nothing.
+// SOCKET_STATE value.  If the socket handle has an invalid value, this function
+// does nothing.  When this function has changed the state of the socket to the
+// new value, then the callback that the user of this library has registered
+// is called.  The user of this library can then get the state of the socket
+// by calling GetSocketState on the socket handle.
 
 void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
 {
@@ -127,6 +209,13 @@ void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
 		return;
 
 	hSocket->sockState = newState;
+
+	// Fire the callback to let the user of this socket know that something
+	// neat happened.
+	if (NULL == hSocket->lpfnCallback)
+		return;
+
+	hSocket->lpfnCallback(hSocket, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -153,6 +242,14 @@ void SetSocketType(HSOCKET hSocket, SOCKET_TYPE newType)
 		return;
 
 	hSocket->sockType = newType;
+
+	// Fire the callback to let the user of this socket know that something
+	// neat happened.
+	if (NULL == hSocket->lpfnCallback)
+		return;
+
+	hSocket->lpfnCallback(hSocket, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+

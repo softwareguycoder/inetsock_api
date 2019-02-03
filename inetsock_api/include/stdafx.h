@@ -17,5 +17,6 @@
 #include <netdb.h>
 
 //#include <../../debug_core/debug_core/include/debug_core.h>
+#include <../../inetsock_core/inetsock_core/include/inetsock_core.h>
 
 #endif //__INETSOCK_API_STDAFX_H__
