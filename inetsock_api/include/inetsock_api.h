@@ -120,9 +120,21 @@ void RunServer(HSOCKET hSocket, int nPort);
  * @param hSocket Handle to the socket for which the state is to be changed.
  * @param newState One of the SOCKET_STATE values that defines the new state.
  * @remarks If this socket has a callback registered, then the callback is called with a
- * NULL value for the lpUserState parameter.
+ * NULL value for the lpUserState parameter.  This function is an alias for SetSocketStateEx,
+ * here we do not pass in any user state.
  */
 void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState);
+
+/**
+ * @brief Sets the state of the specified socket to a new value as indicated by the newState
+ * parameter.
+ * @param hSocket Handle to the socket for which the state is to be changed.
+ * @param newState One of the SOCKET_STATE values that defines the new state.
+ * @param lpUserState State bag to be passed along to the socket callback.
+ * @remarks If this socket has a callback registered, then the callback is called with the
+ * value passed in for the lpUserState parameter. *
+ */
+void SetSocketStateEx(HSOCKET hSocket, SOCKET_STATE newState, void* lpUserState);
 
 /**
  * @brief Sets the state of the specified socket to a new value as indicated by the newState

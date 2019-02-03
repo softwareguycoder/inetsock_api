@@ -214,9 +214,25 @@ void RunServer(HSOCKET hSocket, int nPort)
 // does nothing.  When this function has changed the state of the socket to the
 // new value, then the callback that the user of this library has registered
 // is called.  The user of this library can then get the state of the socket
-// by calling GetSocketState on the socket handle.
+// by calling GetSocketState on the socket handle.  This aliases SetSocketStateEx
+// passing in a NULL value for lpUserState, the parameter that optionally passes
+// arguments to the callback.
 
 void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
+{
+	SetSocketStateEx(hSocket, newState, NULL);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SetSocketStateEx - Sets the state of the specified socket to the specified
+// SOCKET_STATE value.  If the socket handle has an invalid value, this function
+// does nothing.  When this function has changed the state of the socket to the
+// new value, then the callback that the user of this library has registered
+// is called, passing the value in the lpUserState parameter as a state bag.
+// The user of this library can then get the state of the socket
+// by calling GetSocketState on the socket handle.
+
+void SetSocketStateEx(HSOCKET hSocket, SOCKET_STATE newState, void* lpUserState)
 {
 	if (INVALID_HANDLE_VALUE == hSocket)
 		return;
@@ -234,7 +250,7 @@ void SetSocketState(HSOCKET hSocket, SOCKET_STATE newState)
 	if (NULL == hSocket->lpfnCallback)
 		return;
 
-	hSocket->lpfnCallback(hSocket, NULL);
+	hSocket->lpfnCallback(hSocket, lpUserState);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
