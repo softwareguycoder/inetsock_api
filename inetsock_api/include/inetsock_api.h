@@ -25,6 +25,7 @@ typedef enum
 	SOCKET_STATE_OPENED,
 	SOCKET_STATE_SENDING,
 	SOCKET_STATE_SENT,
+	SOCKET_STATE_READY,	/* socket is ready for use! */
 	SOCKET_STATE_RECEIVING,
 	SOCKET_STATE_RECEIVED,
 	SOCKET_STATE_LISTENING,
@@ -49,12 +50,20 @@ typedef enum
  */
 typedef struct _tagSOCKET *HSOCKET;
 
+/*typedef struct _tagSOCKETSENDDATA {
+	HSOCKET hSocket;
+	char* pszData;
+	int nBytesSent;
+} SOCKETSENDDATA, *PSOCKETSENDDATA;*/
+
 /**
  * @brief Pointer to a function that will be executed as a callback each time a given socket's
  * state changes.
  * @param hSocket Handle to the socket that is firing events through this particular callback.
  * @param lpUserState Points to additional user state information.  Can be of any type (in
  * principle).
+ * @remarks !!IMPORTANT!! All implementers of this callback must set the socket state to SOCKET_STATE_READY
+ * prior to returning.
  */
 typedef void (*LPSOCKET_EVENT_ROUTINE)(HSOCKET hSocket, void* lpUserState);
 
@@ -100,6 +109,13 @@ SOCKET_STATE GetSocketState(HSOCKET hSocket);
 SOCKET_TYPE GetSocketType(HSOCKET hSocket);
 
 /**
+ * @brief Forcibly terminates the program with the ERROR exit code while also closing
+ * and deallocating the memory for the socket.
+ * @param hSocket Socket handle to the socket to be killed.
+ * @param pszMessage Message to display to the user.
+ */
+void KillSocket(HSOCKET hSocket, const char* pszMessage);
+/**
  * @brief Opens (creates) a new socket of the specified type.
  * @param type One of the SOCKET_TYPE values.  Specifies which type of socket is to be opened.
  */
@@ -113,6 +129,17 @@ HSOCKET OpenSocket(SOCKET_TYPE type, LPSOCKET_EVENT_ROUTINE lpfnCallback);
  * @param nPort Port number on which the server is to listen for incoming connections.
  */
 void RunServer(HSOCKET hSocket, int nPort);
+
+/**
+ * @brief Sends data over an open and connected socket.  This function will check the socket
+ * for a SOCKET_STATE_CONNECTED state, and refuses to run if this is not the case.
+ * @param hSocket Socket handle representing the TCP endpoint over which to send data.
+ * @param pszData Pointer to a buffer containing the data to be sent.
+ * @returns ERROR if the operation failed; number of bytes sent otherwise.
+ *	If the ERROR value is returned, errno should be examined to determine the
+ *  cause of the error.  The socket's state will be set to SOCKET_STATE_ERROR.
+ */
+int Send(HSOCKET hSocket, const char* pszData);
 
 /**
  * @brief Sets the state of the specified socket to a new value as indicated by the newState

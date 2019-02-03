@@ -24,6 +24,8 @@
 
 void free_buffer(void **ppBuffer)
 {
+	log_info("In inetsock_api's free_buffer");
+
     if (ppBuffer == NULL || *ppBuffer == NULL)
         return;     // Nothing to do since there is no address referenced
 
@@ -83,6 +85,11 @@ void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort)
 
 	if (NULL == hSocket->lpfnCallback)
 		return;
+
+	// if this is not a socket of type SOCKET_TYPE_CLIENT, stop.  Only Client sockets
+	// can connect to Servers.
+	if (SOCKET_TYPE_CLIENT != GetSocketType(hSocket))
+		error("Not a client socket.");
 
 	// Put the socket in state SOCKET_STATE_CONNECTING
 	SetSocketState(hSocket, SOCKET_STATE_CONNECTING);
@@ -151,6 +158,29 @@ SOCKET_TYPE GetSocketType(HSOCKET hSocket)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// KillSocket - closes and destroys the socket passed, and prints the error
+// message to STDERR if one is provided, and then puts the calling program
+// out of its misery
+
+void KillSocket(HSOCKET hSocket, const char* pszMessage)
+{
+	if (INVALID_HANDLE_VALUE == hSocket)
+		return;
+
+	if (NULL == pszMessage
+			|| strlen(pszMessage) == 0)
+	{
+        perror(NULL);
+        exit(ERROR);
+        return;         // This return statement might not fire, but just in case.
+	}
+
+	CloseSocket(hSocket);
+
+	error(pszMessage);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // OpenSocket - creates a new socket in the operating system of the specified
 // type, and, depending on the type of socket, prepares it according to whether
 // the socket is for a client, data, or server connection.  Returns a handle
@@ -180,10 +210,6 @@ HSOCKET OpenSocket(SOCKET_TYPE type, LPSOCKET_EVENT_ROUTINE lpfnCallback)
 
 		free_buffer((void**)&hSocket);
 
-		// Call the callback -- this is the only time that we call the callback
-		// prior to it being associated with a socket handle
-		lpfnCallback(INVALID_HANDLE_VALUE, NULL);
-
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -206,6 +232,46 @@ HSOCKET OpenSocket(SOCKET_TYPE type, LPSOCKET_EVENT_ROUTINE lpfnCallback)
 void RunServer(HSOCKET hSocket, int nPort)
 {
 	// TODO: Add implementation code here
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Send - Sends data synchronously on a connected socket.
+
+int Send(HSOCKET hSocket, const char* pszData)
+{
+	if (INVALID_HANDLE_VALUE == hSocket)
+		exit(ERROR);
+
+	if (NULL == pszData || strlen(pszData) == 0)
+		return 0;	/* zero bytes sent if zero bytes requested to be sent! */
+
+	if (SOCKET_STATE_READY != GetSocketState(hSocket))
+		return ERROR;
+
+	SetSocketState(hSocket, SOCKET_STATE_SENDING);
+
+	// Send the data, using the SocketDemoUtils_send function
+	int result = SocketDemoUtils_send(hSocket->nSocketDescriptor, pszData);
+
+	/*PSOCKETSENDDATA pUserState = (PSOCKETSENDDATA)malloc(sizeof(SOCKETSENDDATA));
+	pUserState->hSocket = hSocket;
+	pUserState->nBytesSent = result;
+	pUserState->pszData = pszData;*/
+
+	// Only put the socket in the SOCKET_STATE_SENT state if the send
+	// was successful; i.e., if result > 0.  Otherwise, an error occurred,
+	// so else put the socket into the SOCKET_STATE_ERROR state.  BTW: If the
+	// send was successful, pass the number of bytes sent by the socket
+	// into the user state bag passed to the callback
+	if (result >= 0)
+		SetSocketStateEx(hSocket, SOCKET_STATE_SENT, &result);
+	else
+		SetSocketState(hSocket, SOCKET_STATE_ERROR);
+
+	/*free(pUserState);
+	pUserState = NULL;*/
+
+	return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -248,6 +314,11 @@ void SetSocketStateEx(HSOCKET hSocket, SOCKET_STATE newState, void* lpUserState)
 	// Fire the callback to let the user of this socket know that something
 	// neat happened.
 	if (NULL == hSocket->lpfnCallback)
+		return;
+
+	// To avoid race conditions, do not call the callback function if
+	// the socket is put into the READY state.
+	if (SOCKET_STATE_READY == newState)
 		return;
 
 	hSocket->lpfnCallback(hSocket, lpUserState);
