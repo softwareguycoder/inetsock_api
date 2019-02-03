@@ -76,7 +76,26 @@ void CloseSocket(HSOCKET hSocket)
 
 void ConnectToServer(HSOCKET hSocket, const char* pszHostAddress, int nPort)
 {
-	// TODO: Add implementation code here
+	/* Cannot do anything with a socket that has not been opened */
+	if (INVALID_HANDLE_VALUE == hSocket){
+		return;
+	}
+
+	if (NULL == hSocket->lpfnCallback)
+		return;
+
+	// Put the socket in state SOCKET_STATE_CONNECTING
+	SetSocketState(hSocket, SOCKET_STATE_CONNECTING);
+
+	// Attempt to connect to the server.  The function below is guaranteed to close the socket
+	// and forcibly terminate this program in the event of a network error, so we do not need
+	// to check the result.
+	SocketDemoUtils_connect(hSocket->nSocketDescriptor,
+			pszHostAddress, nPort);
+
+	// If we are still here, then connection succeeded.  Put the socket in the
+	// SOCKET_STATE_CONNECTED state.  This will trigger the callback.
+	SetSocketState(hSocket, SOCKET_STATE_CONNECTED);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
